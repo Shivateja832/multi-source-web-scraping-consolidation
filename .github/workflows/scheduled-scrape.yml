@@ -1,0 +1,83 @@
+name: Scheduled scraper and public results
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  scrape-and-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Check out project
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Run unit tests
+        run: python -m pytest tests -q
+      - name: Check directories
+        run: python healthcheck.py
+      - name: Scrape public sources
+        env:
+          OUTPUT_DIR: ${{ runner.temp }}/scraper-output
+          LOG_DIR: ${{ runner.temp }}/scraper-logs
+          DEFAULT_PAGE_LIMIT: "3"
+          MAX_RETRIES: "3"
+          RATE_LIMIT_DELAY_SECONDS: "1"
+          REQUEST_TIMEOUT: "25"
+        run: |
+          echo "OUTPUT_DIR=$OUTPUT_DIR" >> "$GITHUB_ENV"
+          echo "LOG_DIR=$LOG_DIR" >> "$GITHUB_ENV"
+          python main.py
+      - name: Validate outputs and source URLs
+        run: python healthcheck.py --require-output
+      - name: Build public results page
+        run: python publish_site.py
+      - name: Upload run outputs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scraper-output-${{ github.run_number }}
+          path: |
+            ${{ runner.temp }}/scraper-output/summary_report.json
+            ${{ runner.temp }}/scraper-logs/pipeline.log
+          if-no-files-found: warn
+          retention-days: 30
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - name: Deploy public results page
+        id: deployment
+        uses: actions/deploy-pages@v4
+      - name: Record successful deployment
+        if: success()
+        run: |
+          echo "Scrape and public results deployment completed." >> "$GITHUB_STEP_SUMMARY"
+          echo "Published URL: ${{ steps.deployment.outputs.page_url }}" >> "$GITHUB_STEP_SUMMARY"
+      - name: Record failed run
+        if: failure()
+        run: |
+          echo "Scrape or deployment failed. Review this workflow run and enable GitHub Actions failure notifications in repository settings." >> "$GITHUB_STEP_SUMMARY"

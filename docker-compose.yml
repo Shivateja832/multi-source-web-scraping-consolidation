@@ -1,0 +1,18 @@
+version: '3.9'
+
+services:
+  scraper:
+    build: .
+    container_name: multi-source-scraper
+    environment:
+      REQUEST_TIMEOUT: 20
+      MAX_RETRIES: 3
+      RATE_LIMIT_DELAY_SECONDS: 0.5
+      DEFAULT_PAGE_LIMIT: 3
+      OUTPUT_DIR: /app/output
+      LOG_DIR: /app/logs
+      BOOKS_BASE_URL: https://books.toscrape.com/
+      QUOTES_BASE_URL: https://quotes.toscrape.com/
+    volumes:
+      - .:/app
+    command: python main.py

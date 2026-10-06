@@ -1,0 +1,23 @@
+{
+  "generated_at": "2026-10-06T16:06:25.962280+00:00",
+  "status": "success",
+  "execution_time_seconds": 166.521,
+  "request_failures": 0,
+  "sites": {
+    "Books to Scrape": {
+      "records_collected": 60,
+      "records_after_cleaning": 60,
+      "records_rejected_during_validation": 0
+    },
+    "Quotes to Scrape": {
+      "records_collected": 30,
+      "records_after_cleaning": 30,
+      "records_rejected_during_validation": 0
+    }
+  },
+  "total_records_collected": 90,
+  "total_records_after_cleaning": 90,
+  "records_rejected_during_validation": 0,
+  "duplicate_records_detected": 0,
+  "final_record_count": 90
+}

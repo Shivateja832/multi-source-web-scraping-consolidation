@@ -1,0 +1,12 @@
+.env
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+*.py[cod]
+logs/*
+!logs/.gitkeep
+site/
+submission/
+multi_source_web_scraping_submission.zip
+output/*.csv
