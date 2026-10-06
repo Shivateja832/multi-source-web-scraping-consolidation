@@ -156,4 +156,4 @@ The pipeline writes the following outputs to `output/`:
 - Duplicate detection is conservative and designed for practical quality checks rather than production-scale entity resolution.
 
 ## AI usage summary
-AI tooling was used to help structure the scraper, generate clean Python code, refine validation logic, and verify the pagination logic. The final implementation was reviewed, corrected, and tested before execution.
+GitHub Copilot in VS Code assisted with implementation, documentation, tests, and validation. See [AI_USAGE.md](./AI_USAGE.md) for details.
