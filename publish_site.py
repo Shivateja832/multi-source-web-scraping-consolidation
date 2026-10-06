@@ -26,6 +26,9 @@ def build_site() -> Path:
     generated_at = html.escape(str(summary["generated_at"]))
     total = int(summary["final_record_count"])
     failed = int(summary["records_rejected_during_validation"])
+    duplicates = int(summary["duplicate_records_detected"])
+    duration = float(summary["execution_time_seconds"])
+    request_failures = int(summary["request_failures"])
     page = f"""<!doctype html>
 <html lang="en">
 <head>
@@ -42,7 +45,8 @@ def build_site() -> Path:
   <h1>Multi-source scraper results</h1>
   <p class="status">Latest scheduled run completed and passed output validation.</p>
   <p>Generated at: <time>{generated_at}</time></p>
-  <p>Records: {total}; validation rejects: {failed}</p>
+  <p>Records: {total}; validation rejects: {failed}; duplicates removed: {duplicates}</p>
+  <p>Request failures: {request_failures}; run duration: {duration:.1f} seconds</p>
   <p><a href="summary_report.json">View summary report</a></p>
 </body>
 </html>

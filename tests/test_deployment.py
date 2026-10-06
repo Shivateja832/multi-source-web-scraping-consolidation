@@ -80,8 +80,11 @@ def test_build_site_copies_validated_public_outputs(tmp_path, monkeypatch):
         json.dumps({
             "generated_at": "2026-10-06T00:00:00+00:00",
             "status": "success",
+            "execution_time_seconds": 1.0,
+            "request_failures": 0,
             "final_record_count": 1,
             "records_rejected_during_validation": 0,
+            "duplicate_records_detected": 0,
             "sites": {
                 "Books to Scrape": {"records_collected": 1},
                 "Quotes to Scrape": {"records_collected": 1},

@@ -3,6 +3,8 @@
 ## Overview
 This project scrapes public data from Books to Scrape and Quotes to Scrape, cleans and validates the records, removes duplicates, and writes a final consolidated dataset to the `output/` directory.
 
+Live results page: https://shivateja832.github.io/multi-source-web-scraping-consolidation/
+
 ## Python version
 Python 3.11+
 
@@ -78,12 +80,12 @@ The GitHub Actions workflow runs on pushes to `main`, daily at 06:00 UTC, and ca
 To activate it:
 1. Create a GitHub repository and push this project to its default branch (`main` or `master`).
 2. In the repository, open **Settings → Actions → General** and allow GitHub Actions.
-3. Open **Settings → Pages**, select **GitHub Actions** as the build and deployment source, and save. Ensure the workflow permission `pages: write` is permitted.
+3. GitHub Pages is configured for this repository to deploy with Actions. For a different repository, open **Settings → Pages**, select **GitHub Actions** as the build and deployment source, and save. Ensure the workflow permission `pages: write` is permitted.
 4. Open **Actions → Scheduled scraper and public results → Run workflow** for the first run. The daily schedule then runs automatically.
 5. Open **Settings → Pages** or the successful workflow's `github-pages` environment to find the public site URL.
 6. In **Settings → Notifications** / your GitHub notification preferences, enable notifications for failed workflow runs. Each failed scrape or publish run will also appear as failed in Actions; inspect its logs and downloadable artifacts.
 
-The public site exposes only aggregate run metrics and summary JSON, not the scraped CSV/text. The full CSV is generated and validated on the Actions runner but is not committed or published, avoiding public redistribution of scraped source text. This is a static publication of the latest validated results, not an always-on application server or API. GitHub Actions runs on ephemeral runners. Summary and logs are available as per-run artifacts for 30 days. A failed scrape, output validation, or Pages deployment marks the workflow failed; enable GitHub notifications for Actions failures to receive alerts. Free usage is subject to GitHub's current limits and repository plan.
+The public site exposes only aggregate run metrics and summary JSON, not the scraped CSV/text. The full CSV is generated and validated on the Actions runner but is not committed or published, avoiding public redistribution of scraped source text. This is a static publication of the latest validated results, not an always-on application server or API. GitHub Actions runs on ephemeral runners. Summary and logs are available as per-run artifacts for 30 days. A failed scrape, output validation, or Pages deployment marks the workflow failed and opens or updates a single GitHub alert issue; the next successful run comments on and closes that issue. Enable repository issue and Actions notifications to receive alerts. Free usage is subject to GitHub's current limits and repository plan.
 
 ## Pagination behavior
 - Books to Scrape: the scraper starts on the root listing page and follows the `next` link until no more pages are present.
