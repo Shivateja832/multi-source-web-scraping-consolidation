@@ -21,7 +21,7 @@ jobs:
           pip install -r requirements.txt
           pip install ruff
       - name: Run tests
-        run: pytest tests/test_pipeline.py -q
+        run: python -m pytest tests -q
       - name: Lint
         run: ruff check config.py healthcheck.py main.py publish_site.py processing scrapers tests
       - name: Validate runtime configuration
