@@ -42,12 +42,19 @@ def fetch_with_retry(url: str) -> requests.Response:
     for attempt in range(1, MAX_RETRIES + 1):
         try:
             response = requests.get(url, timeout=REQUEST_TIMEOUT, headers=DEFAULT_HEADERS)
-        except requests.RequestException:
+        except requests.RequestException as exc:
             if attempt == MAX_RETRIES:
                 REQUEST_FAILURE_COUNT += 1
                 raise
             delay = _backoff_seconds(attempt)
-            logger.warning("Request failed; retrying in %.2fs: %s", delay, url)
+            logger.info(
+                "Temporary network issue (%s); retry %s/%s in %.2fs: %s",
+                exc,
+                attempt + 1,
+                MAX_RETRIES,
+                delay,
+                url,
+            )
             time.sleep(delay)
             continue
 
@@ -56,9 +63,11 @@ def fetch_with_retry(url: str) -> requests.Response:
                 REQUEST_FAILURE_COUNT += 1
                 response.raise_for_status()
             delay = _backoff_seconds(attempt, response)
-            logger.warning(
-                "HTTP %s; retrying in %.2fs: %s",
+            logger.info(
+                "Temporary HTTP %s response; retry %s/%s in %.2fs: %s",
                 response.status_code,
+                attempt + 1,
+                MAX_RETRIES,
                 delay,
                 url,
             )

@@ -1,5 +1,6 @@
 import csv
 import json
+import logging
 
 import pytest
 import requests
@@ -30,6 +31,31 @@ def test_fetch_with_retry_retries_transient_status(monkeypatch):
     assert result.status_code == 200
     assert len(calls) == 3
     assert delays == [1, 2, 1]
+
+
+def test_fetch_with_retry_logs_transient_network_issue_as_info(monkeypatch, caplog):
+    outcomes = [requests.ConnectionError("connection reset"), _http_response(200)]
+    delays = []
+
+    def fake_get(*_args, **_kwargs):
+        outcome = outcomes.pop(0)
+        if isinstance(outcome, Exception):
+            raise outcome
+        return outcome
+
+    monkeypatch.setattr(http.requests, "get", fake_get)
+    monkeypatch.setattr(http.time, "sleep", delays.append)
+    monkeypatch.setattr(http, "RATE_LIMIT_DELAY_SECONDS", 0)
+    http.reset_request_failures()
+
+    with caplog.at_level(logging.INFO, logger=http.__name__):
+        response = http.fetch_with_retry("https://example.test")
+
+    assert response.status_code == 200
+    assert delays == [0, 0]
+    assert "Temporary network issue (connection reset); retry 2/3" in caplog.text
+    assert "Request failed" not in caplog.text
+    assert http.get_request_failures() == 0
 
 
 def test_fetch_with_retry_does_not_retry_permanent_http_error(monkeypatch):
