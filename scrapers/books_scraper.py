@@ -82,7 +82,7 @@ def scrape_books(limit_pages: int | None = None) -> list[dict]:
     while page_url and page_url not in seen_urls:
         seen_urls.add(page_url)
         page_count += 1
-        if limit_pages and page_count > limit_pages:
+        if limit_pages is not None and page_count > limit_pages:
             break
         try:
             response = fetch_with_retry(page_url)
@@ -95,11 +95,7 @@ def scrape_books(limit_pages: int | None = None) -> list[dict]:
             href = link.get("href")
             if not href:
                 continue
-            if href.startswith(("catalogue/", "/catalogue/")):
-                full_url = urljoin(BASE_URL, href)
-            else:
-                full_url = urljoin("https://books.toscrape.com/catalogue/", href)
-            product_links.append(full_url)
+            product_links.append(urljoin(page_url, href))
 
         for product_url in product_links:
             try:
@@ -109,10 +105,7 @@ def scrape_books(limit_pages: int | None = None) -> list[dict]:
 
         next_link = soup.select_one("li.next a")
         if next_link and next_link.get("href"):
-            if page_url.startswith("https://books.toscrape.com/catalogue/"):
-                page_url = urljoin("https://books.toscrape.com/catalogue/", next_link["href"])
-            else:
-                page_url = urljoin(BASE_URL, next_link["href"])
+            page_url = urljoin(page_url, next_link["href"])
         else:
             page_url = None
 

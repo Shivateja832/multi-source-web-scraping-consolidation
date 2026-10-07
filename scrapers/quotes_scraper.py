@@ -34,6 +34,7 @@ def _fetch_author_details(author_url: str) -> dict:
 
 def scrape_quotes(limit_pages: int | None = None) -> list[dict]:
     records: list[dict] = []
+    author_details_cache: dict[str, dict] = {}
     page_url = BASE_URL
     page_count = 0
     seen_urls = set()
@@ -41,7 +42,7 @@ def scrape_quotes(limit_pages: int | None = None) -> list[dict]:
     while page_url and page_url not in seen_urls:
         seen_urls.add(page_url)
         page_count += 1
-        if limit_pages and page_count > limit_pages:
+        if limit_pages is not None and page_count > limit_pages:
             break
         try:
             response = fetch_with_retry(page_url)
@@ -60,10 +61,13 @@ def scrape_quotes(limit_pages: int | None = None) -> list[dict]:
 
             author_details = {}
             if author_url:
-                try:
-                    author_details = _fetch_author_details(author_url)
-                except requests.RequestException as exc:
-                    logger.warning("Failed to fetch author details for %s: %s", author_name, exc)
+                if author_url not in author_details_cache:
+                    try:
+                        author_details_cache[author_url] = _fetch_author_details(author_url)
+                    except requests.RequestException as exc:
+                        logger.warning("Failed to fetch author details for %s: %s", author_name, exc)
+                        author_details_cache[author_url] = {}
+                author_details = author_details_cache[author_url]
 
             source_url = author_url or page_url
             record = {
@@ -75,7 +79,7 @@ def scrape_quotes(limit_pages: int | None = None) -> list[dict]:
                 "rating": None,
                 "author": author_name,
                 "tags": tags,
-                "description": author_details.get("description", "") or quote_text,
+                "description": author_details.get("description", ""),
                 "scraped_at": datetime.now(timezone.utc).isoformat(),
             }
             records.append(record)

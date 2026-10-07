@@ -27,6 +27,16 @@ ROOT_DIR = Path(__file__).resolve().parent
 logger = logging.getLogger(__name__)
 
 
+def _positive_page_limit(value: str) -> int:
+    try:
+        limit = int(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("page limit must be a positive integer") from exc
+    if limit < 1:
+        raise argparse.ArgumentTypeError("page limit must be a positive integer")
+    return limit
+
+
 def configure_logging() -> None:
     LOG_DIR.mkdir(parents=True, exist_ok=True)
     logging.basicConfig(
@@ -61,8 +71,9 @@ def write_csv(path: Path, records: list[dict]) -> None:
 
 def run_pipeline(limit_pages: int | None = None, dry_run: bool = False) -> dict:
     if dry_run:
-        OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-        LOG_DIR.mkdir(parents=True, exist_ok=True)
+        from healthcheck import validate_directories
+
+        validate_directories()
         summary = {
             "status": "dry_run",
             "output_dir": str(OUTPUT_DIR),
@@ -123,28 +134,47 @@ def run_pipeline(limit_pages: int | None = None, dry_run: bool = False) -> dict:
                 "records_rejected_during_validation": sum(1 for item in rejected_records if item["record"].get("source") == "Quotes to Scrape"),
             },
         },
+        "sources_without_records": [
+            source
+            for source, records in (
+                ("Books to Scrape", source_a_raw),
+                ("Quotes to Scrape", source_b_raw),
+            )
+            if not records
+        ],
         "total_records_collected": len(all_raw),
         "total_records_after_cleaning": len(cleaned_records),
         "records_rejected_during_validation": len(rejected_records),
         "duplicate_records_detected": duplicate_count,
         "final_record_count": len(final_records),
     }
+    if request_failures or summary["sources_without_records"] or not final_records:
+        summary["status"] = "partial_failure"
 
     with (OUTPUT_DIR / "summary_report.json").open("w", encoding="utf-8") as outfile:
         json.dump(summary, outfile, indent=2)
 
     logger.info("Pipeline complete. Final records: %s", len(final_records))
+    if summary["status"] == "success":
+        from healthcheck import validate_outputs
+
+        validate_outputs()
     return summary
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run the multi-source scraper pipeline.")
-    parser.add_argument("--limit-pages", type=int, default=DEFAULT_PAGE_LIMIT, help="Optional cap on pages per source.")
+    parser.add_argument(
+        "--limit-pages",
+        type=_positive_page_limit,
+        default=DEFAULT_PAGE_LIMIT,
+        help="Optional page cap per source; omit to follow pagination to the final page.",
+    )
     parser.add_argument("--dry-run", action="store_true", help="Validate the app configuration and output directories without scraping.")
     parser.add_argument("--health-check", action="store_true", help="Alias for dry-run validation.")
     args = parser.parse_args()
     result = run_pipeline(limit_pages=args.limit_pages, dry_run=args.dry_run or args.health_check)
-    if result.get("request_failures", 0):
+    if result.get("status") == "partial_failure":
         raise SystemExit(
-            f"Pipeline completed with {result['request_failures']} failed HTTP request(s); see the log and summary."
+            "Pipeline completed with request or data-quality failures; see the summary report and log."
         )

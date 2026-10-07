@@ -15,6 +15,7 @@ def test_validate_record_rejects_invalid_values():
         "name_or_title": "A book title",
         "price": -10,
         "rating": 6,
+        "scraped_at": "2026-10-06T00:00:00+00:00",
     }
     is_valid, errors = validate_record(record)
     assert is_valid is False

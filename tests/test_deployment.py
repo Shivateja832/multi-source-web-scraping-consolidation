@@ -22,7 +22,14 @@ def test_fetch_with_retry_retries_transient_status(monkeypatch):
     responses = [_http_response(503), _http_response(503), _http_response(200)]
     calls = []
     delays = []
-    monkeypatch.setattr(http.requests, "get", lambda *args, **kwargs: calls.append(args[0]) or responses.pop(0))
+
+    def fake_get(url, **kwargs):
+        assert kwargs["timeout"] > 0
+        assert kwargs["headers"]
+        calls.append(url)
+        return responses.pop(0)
+
+    monkeypatch.setattr(http.requests, "get", fake_get)
     monkeypatch.setattr(http.time, "sleep", delays.append)
     monkeypatch.setattr(http, "RATE_LIMIT_DELAY_SECONDS", 1)
 
@@ -37,7 +44,9 @@ def test_fetch_with_retry_logs_transient_network_issue_as_info(monkeypatch, capl
     outcomes = [requests.ConnectionError("connection reset"), _http_response(200)]
     delays = []
 
-    def fake_get(*_args, **_kwargs):
+    def fake_get(url, **kwargs):
+        assert url == "https://example.test"
+        assert kwargs["timeout"] > 0
         outcome = outcomes.pop(0)
         if isinstance(outcome, Exception):
             raise outcome
@@ -60,10 +69,16 @@ def test_fetch_with_retry_logs_transient_network_issue_as_info(monkeypatch, capl
 
 def test_fetch_with_retry_does_not_retry_permanent_http_error(monkeypatch):
     calls = []
+
+    def fake_get(url, **kwargs):
+        assert kwargs["timeout"] > 0
+        calls.append(url)
+        return _http_response(404)
+
     monkeypatch.setattr(
         http.requests,
         "get",
-        lambda *args, **kwargs: calls.append(args[0]) or _http_response(404),
+        fake_get,
     )
 
     with pytest.raises(requests.HTTPError):

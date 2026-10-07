@@ -18,11 +18,12 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install ruff
+          pip install -r requirements-dev.txt
       - name: Run tests
         run: python -m pytest tests -q
       - name: Lint
-        run: ruff check config.py healthcheck.py main.py publish_site.py processing scrapers tests
+        run: python -m ruff check config.py healthcheck.py main.py publish_site.py processing scrapers tests
       - name: Validate runtime configuration
         run: python healthcheck.py
+      - name: Build production container
+        run: docker build --tag multi-source-scraper:test .

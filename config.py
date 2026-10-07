@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import os
 from pathlib import Path
 from urllib.parse import urlparse
@@ -30,6 +31,25 @@ def _get_float(name: str, default: float) -> float:
         raise ValueError(f"{name} must be a number") from exc
 
 
+def _get_page_limit(name: str) -> int | None:
+    value = os.getenv(name)
+    if value is None or not value.strip():
+        return None
+    try:
+        limit = int(value)
+    except ValueError as exc:
+        raise ValueError(f"{name} must be a positive integer or 0 for unlimited pagination") from exc
+    if limit < 0:
+        raise ValueError(f"{name} cannot be negative")
+    return limit or None
+
+
+def _get_path(name: str, default: Path) -> Path:
+    value = os.getenv(name)
+    path = Path(value).expanduser() if value else default
+    return path if path.is_absolute() else ROOT_DIR / path
+
+
 def _get_url(name: str, default: str) -> str:
     value = os.getenv(name, default).strip()
     parsed = urlparse(value)
@@ -48,9 +68,9 @@ DEFAULT_HEADERS = {
 REQUEST_TIMEOUT = _get_int("REQUEST_TIMEOUT", 20)
 MAX_RETRIES = _get_int("MAX_RETRIES", 3)
 RATE_LIMIT_DELAY_SECONDS = _get_float("RATE_LIMIT_DELAY_SECONDS", 0.5)
-OUTPUT_DIR = Path(os.getenv("OUTPUT_DIR", str(ROOT_DIR / "output")))
-LOG_DIR = Path(os.getenv("LOG_DIR", str(ROOT_DIR / "logs")))
-DEFAULT_PAGE_LIMIT = _get_int("DEFAULT_PAGE_LIMIT", 3)
+OUTPUT_DIR = _get_path("OUTPUT_DIR", ROOT_DIR / "output")
+LOG_DIR = _get_path("LOG_DIR", ROOT_DIR / "logs")
+DEFAULT_PAGE_LIMIT = _get_page_limit("DEFAULT_PAGE_LIMIT")
 BOOKS_BASE_URL = _get_url("BOOKS_BASE_URL", "https://books.toscrape.com")
 QUOTES_BASE_URL = _get_url("QUOTES_BASE_URL", "https://quotes.toscrape.com")
 
@@ -58,7 +78,5 @@ if REQUEST_TIMEOUT <= 0:
     raise ValueError("REQUEST_TIMEOUT must be greater than zero")
 if MAX_RETRIES < 1:
     raise ValueError("MAX_RETRIES must be at least one")
-if RATE_LIMIT_DELAY_SECONDS < 0:
-    raise ValueError("RATE_LIMIT_DELAY_SECONDS cannot be negative")
-if DEFAULT_PAGE_LIMIT < 1:
-    raise ValueError("DEFAULT_PAGE_LIMIT must be at least one")
+if not math.isfinite(RATE_LIMIT_DELAY_SECONDS) or RATE_LIMIT_DELAY_SECONDS < 0:
+    raise ValueError("RATE_LIMIT_DELAY_SECONDS must be finite and cannot be negative")

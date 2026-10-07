@@ -16,6 +16,12 @@ Python 3.11+
    python -m pip install -r requirements.txt
    ```
 
+For tests and lint checks, also install the development dependencies:
+
+```bash
+python -m pip install -r requirements-dev.txt
+```
+
 ## How to run
 From the project root:
 
@@ -23,7 +29,7 @@ From the project root:
 python main.py
 ```
 
-By default the pipeline scrapes 3 pages from each source; use a smaller cap for a quick test:
+By default, the pipeline follows each source's pagination through its final page. Use a cap for a quick test:
 
 ```bash
 python main.py --limit-pages 2
@@ -40,7 +46,7 @@ Supported settings include:
 - `REQUEST_TIMEOUT`
 - `MAX_RETRIES`
 - `RATE_LIMIT_DELAY_SECONDS`
-- `DEFAULT_PAGE_LIMIT`
+- `DEFAULT_PAGE_LIMIT` (`0` means follow all pages; a positive number caps pages per source)
 - `OUTPUT_DIR`
 - `LOG_DIR`
 - `BOOKS_BASE_URL`
@@ -52,6 +58,14 @@ A dry-run health validation is available:
 ```bash
 python main.py --dry-run
 python healthcheck.py
+```
+The dry run creates the configured output/log directories and verifies that both are writable.
+
+To run the test and lint checks locally:
+
+```bash
+python -m pytest tests -q
+python -m ruff check config.py healthcheck.py main.py publish_site.py processing scrapers tests
 ```
 
 ## Docker and CI
@@ -71,8 +85,9 @@ docker run --rm multi-source-scraper
 Or with Docker Compose:
 
 ```bash
-docker-compose up --build
+docker compose up --build
 ```
+The container runs as a non-root user and uses separate named volumes for output and logs. Compose applies memory/CPU limits and a failure restart limit. The scraper is a finite batch job and exits after the run; it is not an always-on API process.
 
 ## Free scheduled cloud run and public results
 The GitHub Actions workflow runs on pushes to `main`, daily at 06:00 UTC, and can also be started manually from the repository's **Actions** tab. It runs tests, scrapes both sources, validates the output CSV/JSON and source URLs, uploads the summary and logs as a 30-day artifact, and deploys a static public status/results page.
@@ -90,7 +105,7 @@ The public site exposes only aggregate run metrics and summary JSON, not the scr
 ## Pagination behavior
 - Books to Scrape: the scraper starts on the root listing page and follows the `next` link until no more pages are present.
 - Quotes to Scrape: the scraper follows the quote listing pagination in the same way.
-- The pagination loop is intentionally resilient and stops gracefully when pages fail or no next link exists.
+- The pagination loop follows `next` links until the final page by default. `--limit-pages N` or `DEFAULT_PAGE_LIMIT=N` can cap pages when a shorter run is needed. Failed requests are counted and make the run exit unsuccessfully rather than being reported as a clean success.
 
 ## Data model
 Each record is normalized to a common schema:
@@ -143,7 +158,8 @@ The shared HTTP client applies a timeout, exponential backoff, and retries for c
 The pipeline writes the following outputs to `output/`:
 - `final_dataset.csv`: consolidated cleaned records
 - `summary_report.json`: counts for collection, cleaning, validation, deduplication, and final totals
-- `logs/pipeline.log`: execution logs for inspection
+
+Execution logs are written separately to `logs/pipeline.log` (or the configured `LOG_DIR`).
 
 ## Assumptions
 - The public demo sites remain accessible and do not require special access tokens.

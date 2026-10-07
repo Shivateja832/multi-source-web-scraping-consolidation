@@ -62,13 +62,9 @@ def validate_outputs() -> dict:
     }
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description="Check application directories and generated outputs.")
-    parser.add_argument("--require-output", action="store_true", help="Validate the latest CSV and JSON output files.")
-    args = parser.parse_args()
-
-    required_dirs = [OUTPUT_DIR, LOG_DIR]
-    for directory in required_dirs:
+def validate_directories() -> list[str]:
+    directories = [OUTPUT_DIR, LOG_DIR]
+    for directory in directories:
         path = Path(directory)
         path.mkdir(parents=True, exist_ok=True)
         if not path.is_dir():
@@ -78,8 +74,16 @@ def main() -> int:
             probe.write_text("ok", encoding="utf-8")
         finally:
             probe.unlink(missing_ok=True)
+    return [str(path) for path in directories]
 
-    result = {"status": "healthy", "directories": [str(path) for path in required_dirs]}
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Check application directories and generated outputs.")
+    parser.add_argument("--require-output", action="store_true", help="Validate the latest CSV and JSON output files.")
+    args = parser.parse_args()
+
+    directories = validate_directories()
+    result = {"status": "healthy", "directories": directories}
     if args.require_output:
         result["outputs"] = validate_outputs()
     print(json.dumps(result, indent=2))

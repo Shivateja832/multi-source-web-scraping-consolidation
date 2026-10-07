@@ -20,7 +20,7 @@ concurrency:
 jobs:
   scrape-and-publish:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -42,7 +42,6 @@ jobs:
         env:
           OUTPUT_DIR: ${{ runner.temp }}/scraper-output
           LOG_DIR: ${{ runner.temp }}/scraper-logs
-          DEFAULT_PAGE_LIMIT: "3"
           MAX_RETRIES: "3"
           RATE_LIMIT_DELAY_SECONDS: "1"
           REQUEST_TIMEOUT: "25"
