@@ -38,7 +38,9 @@ jobs:
         run: python -m pytest tests -q
       - name: Check directories
         run: python healthcheck.py
-      - name: Scrape public sources
+      - name: Build production container
+        run: docker build --tag multi-source-scraper:${{ github.sha }} .
+      - name: Scrape public sources in container
         env:
           OUTPUT_DIR: ${{ runner.temp }}/scraper-output
           LOG_DIR: ${{ runner.temp }}/scraper-logs
@@ -48,7 +50,18 @@ jobs:
         run: |
           echo "OUTPUT_DIR=$OUTPUT_DIR" >> "$GITHUB_ENV"
           echo "LOG_DIR=$LOG_DIR" >> "$GITHUB_ENV"
-          python main.py
+          mkdir -p "$OUTPUT_DIR" "$LOG_DIR"
+          docker run --rm \
+            --read-only \
+            --tmpfs /tmp \
+            --memory 512m \
+            --cpus 1 \
+            --security-opt no-new-privileges \
+            --cap-drop ALL \
+            --user "$(id -u):$(id -g)" \
+            --mount "type=bind,src=$OUTPUT_DIR,dst=/app/output" \
+            --mount "type=bind,src=$LOG_DIR,dst=/app/logs" \
+            multi-source-scraper:${{ github.sha }}
       - name: Validate outputs and source URLs
         run: python healthcheck.py --require-output
       - name: Build public results page

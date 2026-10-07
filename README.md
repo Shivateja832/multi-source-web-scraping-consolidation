@@ -90,7 +90,7 @@ docker compose up --build
 The container runs as a non-root user and uses separate named volumes for output and logs. Compose applies memory/CPU limits and a failure restart limit. The scraper is a finite batch job and exits after the run; it is not an always-on API process.
 
 ## Free scheduled cloud run and public results
-The GitHub Actions workflow runs on pushes to `main`, daily at 06:00 UTC, and can also be started manually from the repository's **Actions** tab. It runs tests, scrapes both sources, validates the output CSV/JSON and source URLs, uploads the summary and logs as a 30-day artifact, and deploys a static public status/results page.
+The GitHub Actions workflow runs on pushes to `main`, daily at 06:00 UTC, and can also be started manually from the repository's **Actions** tab. It runs tests, builds the production Docker image, executes the full scraper in a restricted container on a GitHub-hosted Docker-capable runner, validates the output CSV/JSON and source URLs, uploads the summary and logs as a 30-day artifact, and deploys a static public status/results page.
 
 To activate it:
 1. Create a GitHub repository and push this project to its default branch (`main` or `master`).
@@ -100,7 +100,7 @@ To activate it:
 5. Open **Settings → Pages** or the successful workflow's `github-pages` environment to find the public site URL.
 6. In **Settings → Notifications** / your GitHub notification preferences, enable notifications for failed workflow runs. Each failed scrape or publish run will also appear as failed in Actions; inspect its logs and downloadable artifacts.
 
-The public site exposes only aggregate run metrics and summary JSON, not the scraped CSV/text. The full CSV is generated and validated on the Actions runner but is not committed or published, avoiding public redistribution of scraped source text. This is a static publication of the latest validated results, not an always-on application server or API. GitHub Actions runs on ephemeral runners. Summary and logs are available as per-run artifacts for 30 days. A failed scrape, output validation, or Pages deployment marks the workflow failed and opens or updates a single GitHub alert issue; the next successful run comments on and closes that issue. Enable repository issue and Actions notifications to receive alerts. Free usage is subject to GitHub's current limits and repository plan.
+The public site exposes only aggregate run metrics and summary JSON, not the scraped CSV/text. The full CSV is generated and validated on the Actions runner but is not committed or published, avoiding public redistribution of scraped source text. This is a static publication of the latest validated results, not an always-on application server or API. The Docker container runs as a finite batch job on an ephemeral GitHub-hosted runner; it is not a dedicated, continuously running Docker host. Summary and logs are available as per-run artifacts for 30 days. A failed scrape, output validation, or Pages deployment marks the workflow failed and opens or updates a single GitHub alert issue; the next successful run comments on and closes that issue. Enable repository issue and Actions notifications to receive alerts. Free usage is subject to GitHub's current limits and repository plan.
 
 ## Pagination behavior
 - Books to Scrape: the scraper starts on the root listing page and follows the `next` link until no more pages are present.
