@@ -173,4 +173,4 @@ Execution logs are written separately to `logs/pipeline.log` (or the configured 
 
 ## AI usage summary
 
-- GitHub Copilot in VS Code assisted with implementation, debugging, documentation, testing, and validation. See [AI_USAGE.md](./AI_USAGE.md) for details.
+- Claude AI is used in VS Code for assisting with testing and validation. See [AI_USAGE.md](./AI_USAGE.md) for details.
