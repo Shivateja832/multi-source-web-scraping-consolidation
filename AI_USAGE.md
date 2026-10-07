@@ -1,15 +1,19 @@
 # AI Usage Disclosure
 
-GitHub Copilot in VS Code assisted with selected implementation, debugging, and documentation tasks, as well as testing and validation. The project author reviewed the suggestions and is responsible for the final application.
+Claude AI assistance was used only for testing and validation of this project.
 
-## Testing and validation areas
+## Testing and validation
+- Assisted with running and reviewing tests and lint checks.
+- Helped validate pipeline outputs and health checks.
+- Helped interpret test and validation results.
 
-- **Automated tests:** ran and reviewed the project's pytest suite.
-- **Linting and diagnostics:** ran Ruff and checked Pylance diagnostics.
-- **Configuration and startup:** tested dry-run behavior and writable output/log directory checks.
-- **Pipeline outputs:** checked CSV and summary generation, record counts, source URLs, and validation results.
-- **Scraper runs:** ran a limited live scrape and validated its outputs.
-- **CI and Docker:** reviewed GitHub Actions test/build results and the scheduled Docker scraper run.
-- **Deployment:** checked that GitHub Pages published the latest successful run and aggregate summary.
+## Testing and Validation areas:
+- Automated tests: running the project’s pytest suite and reviewing results.
+- Linting and diagnostics: running Ruff and checking Pylance diagnostics.
+- Configuration and startup checks: testing the dry-run and writable output/log directory checks.
+- Pipeline outputs: checking CSV and summary report generation, record counts, source URLs, and validation results.
+- Scraper runs: running a limited live scrape and validating its outputs.
+- CI and Docker: reviewing GitHub Actions test/build results and the scheduled Docker scraper run.
+- Deployment verification: checking that GitHub Pages published the latest successful run and aggregate summary.
 
-AI assistance does not replace the project author's responsibility for reviewing and understanding the application.
+The project author is responsible for the application and its implementation.
