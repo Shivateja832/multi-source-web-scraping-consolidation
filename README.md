@@ -172,4 +172,5 @@ Execution logs are written separately to `logs/pipeline.log` (or the configured 
 - Duplicate detection is conservative and designed for practical quality checks rather than production-scale entity resolution.
 
 ## AI usage summary
-GitHub Copilot in VS Code assisted with implementation, documentation, tests, and validation. See [AI_USAGE.md](./AI_USAGE.md) for details.
+
+- GitHub Copilot in VS Code assisted with implementation, debugging, documentation, testing, and validation. See [AI_USAGE.md](./AI_USAGE.md) for details.
