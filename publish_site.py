@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import html
 import json
+import shutil
 from pathlib import Path
 
 from config import OUTPUT_DIR
@@ -17,7 +18,9 @@ def build_site() -> Path:
     with summary_path.open(encoding="utf-8") as file:
         summary = json.load(file)
 
-    SITE_DIR.mkdir(parents=True, exist_ok=True)
+    if SITE_DIR.exists():
+        shutil.rmtree(SITE_DIR)
+    SITE_DIR.mkdir(parents=True)
     (SITE_DIR / "summary_report.json").write_text(
         json.dumps(summary, indent=2),
         encoding="utf-8",

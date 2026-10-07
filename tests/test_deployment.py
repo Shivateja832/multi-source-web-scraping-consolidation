@@ -112,6 +112,9 @@ def test_build_site_copies_validated_public_outputs(tmp_path, monkeypatch):
     output_dir = tmp_path / "output"
     site_dir = tmp_path / "site"
     output_dir.mkdir()
+    site_dir.mkdir()
+    (site_dir / "final_dataset.csv").write_text("stale private records", encoding="utf-8")
+    (site_dir / "stale.html").write_text("stale public content", encoding="utf-8")
     (output_dir / "final_dataset.csv").write_text(
         "source,source_url,name_or_title,scraped_at\n"
         "Books to Scrape,https://books.toscrape.com/book/,Book,2026-10-06T00:00:00+00:00\n",
@@ -142,4 +145,6 @@ def test_build_site_copies_validated_public_outputs(tmp_path, monkeypatch):
     assert result == site_dir
     assert (site_dir / "summary_report.json").is_file()
     assert not (site_dir / "final_dataset.csv").exists()
+    assert not (site_dir / "stale.html").exists()
+    assert {path.name for path in site_dir.iterdir()} == {"index.html", "summary_report.json"}
     assert "Latest scheduled run completed" in (site_dir / "index.html").read_text(encoding="utf-8")
